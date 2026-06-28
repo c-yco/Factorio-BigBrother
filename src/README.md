@@ -5,6 +5,7 @@ Description
 
 Mod compatibility
 =================
+Compatible with Factorio 2.1.
 
 Contributing
 ============
