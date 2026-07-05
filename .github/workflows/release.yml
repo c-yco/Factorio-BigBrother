@@ -63,8 +63,8 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.MOD_PACKAGE_FILE }}
-          path: ${{ env.MOD_PACKAGE_FILE }}
+          name: ${{ env.MOD_PACKAGE_DIR }}
+          path: ${{ env.MOD_PACKAGE_DIR }}
 
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
