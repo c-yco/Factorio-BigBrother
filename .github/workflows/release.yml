@@ -1,0 +1,67 @@
+name: Build and release mod
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read mod metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mod_name="$(jq -r '.name' src/info.json)"
+          mod_version="$(jq -r '.version' src/info.json)"
+
+          if [[ -z "$mod_name" || "$mod_name" == "null" || -z "$mod_version" || "$mod_version" == "null" ]]; then
+            echo "Could not read name/version from src/info.json"
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            tag_name="${GITHUB_REF_NAME}"
+            if [[ "$tag_name" != "$mod_version" && "$tag_name" != "v$mod_version" ]]; then
+              echo "Tag '$tag_name' does not match mod version '$mod_version' (expected '$mod_version' or 'v$mod_version')."
+              exit 1
+            fi
+          fi
+
+          echo "MOD_NAME=$mod_name" >> "$GITHUB_ENV"
+          echo "MOD_VERSION=$mod_version" >> "$GITHUB_ENV"
+          echo "MOD_PACKAGE_DIR=${mod_name}_${mod_version}" >> "$GITHUB_ENV"
+          echo "MOD_PACKAGE_FILE=${mod_name}_${mod_version}.zip" >> "$GITHUB_ENV"
+
+      - name: Build package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$MOD_PACKAGE_DIR" "$MOD_PACKAGE_FILE"
+          mkdir -p "$MOD_PACKAGE_DIR"
+          cp -a src/. "$MOD_PACKAGE_DIR"/
+          zip -r "$MOD_PACKAGE_FILE" "$MOD_PACKAGE_DIR"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MOD_PACKAGE_FILE }}
+          path: ${{ env.MOD_PACKAGE_FILE }}
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.MOD_PACKAGE_FILE }}
+          name: Big Brother ${{ env.MOD_VERSION }}
+          generate_release_notes: true
