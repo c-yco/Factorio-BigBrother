@@ -2,6 +2,8 @@ name: Build and release mod
 
 on:
   push:
+    branches:
+      - "**"
     tags:
       - "v*"
   workflow_dispatch:
@@ -40,8 +42,14 @@ jobs:
 
           echo "MOD_NAME=$mod_name" >> "$GITHUB_ENV"
           echo "MOD_VERSION=$mod_version" >> "$GITHUB_ENV"
-          echo "MOD_PACKAGE_DIR=${mod_name}_${mod_version}" >> "$GITHUB_ENV"
-          echo "MOD_PACKAGE_FILE=${mod_name}_${mod_version}.zip" >> "$GITHUB_ENV"
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            package_suffix=""
+          else
+            package_suffix="-dev-${GITHUB_SHA::7}"
+          fi
+
+          echo "MOD_PACKAGE_DIR=${mod_name}_${mod_version}${package_suffix}" >> "$GITHUB_ENV"
+          echo "MOD_PACKAGE_FILE=${mod_name}_${mod_version}${package_suffix}.zip" >> "$GITHUB_ENV"
 
       - name: Build package
         shell: bash
