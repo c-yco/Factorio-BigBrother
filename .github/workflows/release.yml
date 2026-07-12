@@ -71,5 +71,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.MOD_PACKAGE_FILE }}
-          name: Big Brother ${{ env.MOD_VERSION }}
+          name: Big Brother FORKED! ${{ env.MOD_VERSION }}
           generate_release_notes: true
